@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>الرسائل</title>
+  <style>
+    /* --- الأنماط السابقة تبقى كما هي --- */
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      display: flex;
+      background-color: #f5f5f5;
+      direction: rtl;
+    }
+
+    /* --- الشريط الجانبي (للكمبيوتر) --- */
+    .sidebar {
+      width: 250px;
+      height: 100vh;
+      background-color: #2c3e50;
+      color: white;
+      padding-top: 20px;
+      position: fixed;
+      right: 0;
+      top: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      transition: transform 0.3s ease;
+      z-index: 1000; /* لضمان ظهوره فوق المحتوى */
+    }
+    .sidebar a {
+      text-decoration: none;
+      color: white;
+      padding: 12px 20px;
+      font-size: 16px;
+      transition: background 0.3s;
+    }
+    .sidebar a:hover {
+      background-color: #34495e;
+    }
+    .user-info {
+      padding: 15px;
+      border-bottom: 1px solid #34495e;
+      text-align: center;
+    }
+    .post-avatar {
+      width: 40px;
+      height: 40px;
+      background-color: #1976d2;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: bold;
+      margin: 0 auto 10px;
+    }
+    .logout-btn {
+      margin-top: auto;
+      background-color: #e74c3c !important;
+      text-align: center;
+      margin: 20px;
+      border-radius: 4px;
+    }
+
+    /* --- شريط التنقل العلوي (للموبايل) --- */
+    .top-navbar {
+      display: none; /* مخفي افتراضيًا */
+      background-color: #2c3e50;
+      color: white;
+      padding: 10px;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      z-index: 1000;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+    .top-navbar .nav-links {
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+    }
+    .top-navbar a {
+      color: white;
+      text-decoration: none;
+      font-size: 14px; /* تصغير الخط قليلًا */
+      padding: 8px 5px;
+    }
+    .top-navbar a:hover {
+      background-color: #34495e;
+      border-radius: 4px;
+    }
+    .menu-toggle {
+        display: none; /* زر القائمة مخفي افتراضيًا */
+        background: none;
+        border: none;
+        color: white;
+        font-size: 24px;
+        cursor: pointer;
+        padding: 5px 15px;
+    }
+
+    /* --- المحتوى الرئيسي --- */
+    .main-content {
+      margin-right: 250px; /* مساحة للشريط الجانبي */
+      padding: 20px;
+      width: calc(100% - 250px);
+      transition: margin-right 0.3s ease;
+      padding-top: 20px; /* مساحة للشريط العلوي في الموبايل */
+    }
+
+    /* --- قسم الرسائل --- */
+    .messages-section {
+      display: flex;
+      /* إزالة الارتفاع الثابت للسماح بالتمدد */
+      /* height: calc(100vh - 40px); */
+      min-height: calc(100vh - 80px); /* ارتفاع أدنى لملء الشاشة تقريبًا */
+      margin-top: 0; /* إزالة الهامش العلوي */
+    }
+
+    .users-list {
+        width: 30%;
+        border-left: 1px solid #ccc;
+        padding: 10px;
+        overflow-y: auto;
+        background-color: #fff;
+        max-height: calc(100vh - 80px); /* تحديد أقصى ارتفاع */
+    }
+    .users-list h3 {
+        margin-top: 0;
+        padding-bottom: 10px;
+        border-bottom: 1px solid #eee;
+    }
+    .user-item {
+        padding: 10px;
+        cursor: pointer;
+        border-bottom: 1px solid #eee;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .user-item:hover, .user-item.active {
+        background-color: #e9e9e9;
+    }
+    .user-item .avatar-small {
+        width: 30px;
+        height: 30px;
+        background-color: #1976d2;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 14px;
+        font-weight: bold;
+    }
+
+    .chat-area {
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+        background-color: #fff;
+        border-radius: 8px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        margin-top: 0; /* إزالة الهامش العلوي */
+        overflow: hidden; /* منع تجاوز المحتوى */
+        max-height: calc(100vh - 80px); /* تحديد أقصى ارتفاع */
+    }
+
+    .chat-header {
+        padding: 15px;
+        border-bottom: 1px solid #eee;
+        background-color: #f9f9f9;
+        font-weight: bold;
+    }
+
+    .messages-display {
+        flex-grow: 1;
+        padding: 15px;
+        overflow-y: auto;
+        background-color: #e5ddd5; /* خلفية تشبه تطبيقات الدردشة */
+        display: flex;
+        flex-direction: column;
+    }
+    .message {
+        margin-bottom: 10px;
+        padding: 8px 12px;
+        border-radius: 15px;
+        max-width: 70%;
+        word-wrap: break-word;
+    }
+    .message.sent {
+        background-color: #dcf8c6; /* لون الرسائل المرسلة */
+        align-self: flex-start; /* محاذاة لليسار (لأننا نستخدم rtl) */
+        margin-left: auto; /* دفعها لليسار */
+    }
+    .message.received {
+        background-color: #fff; /* لون الرسائل المستلمة */
+        align-self: flex-end; /* محاذاة لليمين */
+        margin-right: auto; /* دفعها لليمين */
+    }
+    .message .timestamp {
+        font-size: 0.75em;
+        color: #888;
+        display: block;
+        text-align: left; /* محاذاة الوقت لليسار دائمًا */
+        margin-top: 5px;
+    }
+
+    .message-input-area {
+        display: flex;
+        padding: 10px;
+        border-top: 1px solid #ccc;
+        background-color: #f0f0f0;
+    }
+    .message-input-area textarea {
+        flex-grow: 1;
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 20px;
+        resize: none;
+        min-height: 20px; /* ارتفاع أدنى */
+        max-height: 100px; /* ارتفاع أقصى */
+        margin-left: 10px;
+        font-family: inherit;
+    }
+    .message-input-area button {
+        padding: 10px 15px;
+        background-color: #1976d2;
+        border: none;
+        color: white;
+        border-radius: 20px;
+        cursor: pointer;
+        font-size: 16px;
+    }
+    .message-input-area button:hover {
+        background-color: #1565c0;
+    }
+
+    /* --- استجابة للتصميم (Mobile) --- */
+    @media (max-width: 768px) {
+      .sidebar {
+        transform: translateX(100%); /* إخفاء الشريط الجانبي */
+      }
+      .sidebar.open {
+          transform: translateX(0);
+      }
+      .main-content {
+        margin-right: 0; /* إزالة الهامش */
+        width: 100%;
+        padding: 10px;
+        padding-top: 70px; /* مساحة للشريط العلوي */
+      }
+      .top-navbar {
+        display: flex; /* إظهار الشريط العلوي */
+        justify-content: space-between; /* توزيع العناصر */
+      }
+      .menu-toggle {
+          display: block; /* إظهار زر القائمة */
+      }
+      .top-navbar .nav-links {
+          display: none; /* إخفاء الروابط افتراضيًا */
+          position: absolute;
+          top: 100%;
+          right: 0;
+          background-color: #2c3e50;
+          width: 100%;
+          flex-direction: column;
+          align-items: stretch;
+          box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+      }
+      .top-navbar .nav-links.open {
+          display: flex;
+      }
+      .top-navbar .nav-links a {
+          padding: 15px 20px;
+          border-bottom: 1px solid #34495e;
+          text-align: center;
+      }
+      .top-navbar .nav-links a:last-child {
+          border-bottom: none;
+      }
+
+      .messages-section {
+        flex-direction: column;
+        height: calc(100vh - 60px); /* تعديل الارتفاع */
+        min-height: unset; /* إلغاء الارتفاع الأدنى للموبايل */
+      }
+      .users-list {
+          width: 100%;
+          height: 150px; /* ارتفاع ثابت لقائمة المستخدمين */
+          border-left: none;
+          border-bottom: 1px solid #ccc;
+          max-height: 150px; /* تحديد أقصى ارتفاع */
+      }
+      .chat-area {
+          width: 100%;
+          height: calc(100% - 150px); /* باقي الارتفاع للمحادثة */
+          max-height: unset; /* إلغاء الارتفاع الأقصى للموبايل */
+      }
+      .message {
+          max-width: 85%;
+      }
+    }
+
+  </style>
+</head>
+<body>
+
+  <!-- شريط التنقل العلوي (للموبايل) -->
+  <div class="top-navbar">
+    <button class="menu-toggle" id="menuToggle">☰</button>
+    <div class="nav-links" id="navLinks">
+      <a href="thesociety.html">🏠 الرئيسية</a>
+      <a href="subjective.html">👤 الملف الشخصي</a>
+      <a href="Themessage.html">💬 الرسائل</a>
+      <a href="data.html">📊 جدول البيانات</a>
+      <a href="#" class="logout-btn" id="logoutBtnMobile">تسجيل الخروج</a>
+    </div>
+  </div>
+
+  <!-- الشريط الجانبي (للكمبيوتر) -->
+  <div class="sidebar" id="sidebar">
+    <div class="user-info">
+      <div class="post-avatar" id="userAvatar"></div>
+      <div id="userName"></div>
+    </div>
+    <a href="thesociety.html">🏠 الرئيسية</a>
+    <a href="subjective.html">👤 الملف الشخصي</a>
+    <a href="Themessage.html">💬 الرسائل</a>
+    <a href="data.html">📊 جدول البيانات</a>
+    <a href="#" class="logout-btn" id="logoutBtnSidebar">تسجيل الخروج</a>
+  </div>
+
+  <!-- المحتوى الرئيسي -->
+  <div class="main-content">
+    <h2>الرسائل</h2>
+    <div class="messages-section">
+      <!-- قائمة المستخدمين -->
+      <div class="users-list" id="usersListContainer">
+        <h3>المستخدمون</h3>
+        <div id="usersList">
+          <!-- سيتم ملء قائمة المستخدمين هنا بواسطة JavaScript -->
+          <p>جاري تحميل المستخدمين...</p>
+        </div>
+      </div>
+
+      <!-- منطقة الدردشة -->
+      <div class="chat-area" id="chatArea">
+        <div class="chat-header" id="chatHeader">
+          اختر مستخدمًا لبدء المحادثة
+        </div>
+        <div class="messages-display" id="messagesDisplay">
+          <!-- سيتم عرض الرسائل هنا -->
+        </div>
+        <div class="message-input-area" id="messageInputArea" style="display: none;"> <!-- مخفي حتى يتم اختيار مستخدم -->
+          <textarea id="messageInput" placeholder="اكتب رسالتك هنا..." rows="1"></textarea>
+          <button id="sendMessageBtn">إرسال</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Firebase SDK -->
+  <!-- تأكد من استخدام أحدث إصدارات SDK المتوافقة -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+
+  <script>
+    // --- إعدادات Firebase --- 
+    // هام: استبدل القيم التالية بإعدادات مشروع Firebase الخاص بك
+    const firebaseConfig = {
+      apiKey: "ضع-مفتاح-API-الخاص-بك-هنا",
+      authDomain: "ضع-نطاق-المصادقة-الخاص-بك-هنا",
+      databaseURL: "ضع-رابط-قاعدة-البيانات-الخاص-بك-هنا", // تأكد من أنه رابط Realtime Database
+      projectId: "ضع-معرف-المشروع-الخاص-بك-هنا",
+      storageBucket: "ضع-حاوية-التخزين-الخاصة-بك-هنا",
+      messagingSenderId: "ضع-معرف-مرسل-الرسائل-الخاص-بك-هنا",
+      appId: "ضع-معرف-التطبيق-الخاص-بك-هنا"
+    };
+
+    // تهيئة Firebase
+    firebase.initializeApp(firebaseConfig);
+    const database = firebase.database(); // الحصول على مرجع لقاعدة البيانات
+  </script>
+
+  <script src="app.js"></script>
+  <script src="messages.js"></script> <!-- ملف جافاسكريبت للرسائل (سيتم تعديله) -->
+  <script>
+    // إضافة وظيفة تبديل القائمة للموبايل
+    document.addEventListener('DOMContentLoaded', () => {
+        const menuToggle = document.getElementById('menuToggle');
+        const navLinks = document.getElementById('navLinks');
+        const logoutBtnMobile = document.getElementById('logoutBtnMobile');
+        // زر الشريط الجانبي يتم التعامل معه في app.js عبر #logoutBtnSidebar أو #logoutBtn
+
+        if (menuToggle && navLinks) {
+            menuToggle.addEventListener('click', () => {
+                navLinks.classList.toggle('open');
+            });
+        }
+
+        // التعامل مع تسجيل الخروج للموبايل
+        function handleLogout() {
+            localStorage.removeItem('currentUser');
+            // يمكنك إضافة مسح بيانات أخرى إذا لزم الأمر
+            window.location.href = 'index1.html';
+        }
+
+        if (logoutBtnMobile) {
+            logoutBtnMobile.addEventListener('click', handleLogout);
+        }
+    });
+  </script>
+</body>
+</html>
+
